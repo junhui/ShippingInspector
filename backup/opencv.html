@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Frame Similarity Checker (pHash)</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        input { margin: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Upload Two Frames to Compare</h2>
+    <input type="file" id="image1" accept="image/*">
+    <input type="file" id="image2" accept="image/*">
+    <button onclick="compareImages()">Compare Frames</button>
+
+    <h3 id="result">Similarity Score: N/A</h3>
+
+    <script>
+        function getPHashFromCanvas(canvas, size = 32, hashSize = 8) {
+            const tempCanvas = document.createElement("canvas");
+            const tempCtx = tempCanvas.getContext("2d");
+
+            tempCanvas.width = size;
+            tempCanvas.height = size;
+
+            tempCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, size, size);
+
+            const imgData = tempCtx.getImageData(0, 0, size, size).data;
+            let grayscale = [];
+
+            for (let i = 0; i < imgData.length; i += 4) {
+                let gray = imgData[i] * 0.299 + imgData[i + 1] * 0.587 + imgData[i + 2] * 0.114;
+                grayscale.push(gray);
+            }
+
+            function computeDCT(matrix, size) {
+                let dct = new Array(size * size).fill(0);
+                let factor = Math.PI / size;
+
+                for (let u = 0; u < size; u++) {
+                    for (let v = 0; v < size; v++) {
+                        let sum = 0;
+                        for (let x = 0; x < size; x++) {
+                            for (let y = 0; y < size; y++) {
+                                sum += matrix[y * size + x] *
+                                    Math.cos((2 * x + 1) * u * factor / 2) *
+                                    Math.cos((2 * y + 1) * v * factor / 2);
+                            }
+                        }
+                        let alphaU = u === 0 ? 1 / Math.sqrt(2) : 1;
+                        let alphaV = v === 0 ? 1 / Math.sqrt(2) : 1;
+                        dct[v * size + u] = (1 / 4) * alphaU * alphaV * sum;
+                    }
+                }
+                return dct;
+            }
+
+            let dctMatrix = computeDCT(grayscale, size);
+            let dctLowFreq = [];
+            for (let i = 0; i < hashSize; i++) {
+                for (let j = 0; j < hashSize; j++) {
+                    dctLowFreq.push(dctMatrix[i * size + j]);
+                }
+            }
+
+            let median = dctLowFreq.slice().sort((a, b) => a - b)[Math.floor(dctLowFreq.length / 2)];
+            return dctLowFreq.map(value => (value > median ? 1 : 0));
+        }
+
+        function getSimilarityScore(canvas1, canvas2) {
+            let hash1 = getPHashFromCanvas(canvas1);
+            let hash2 = getPHashFromCanvas(canvas2);
+
+            let hammingDistance = hash1.reduce((acc, val, i) => acc + (val !== hash2[i] ? 1 : 0), 0);
+            return ((1 - hammingDistance / hash1.length) * 100).toFixed(2);
+        }
+
+        function compareImages() {
+            const file1 = document.getElementById('image1').files[0];
+            const file2 = document.getElementById('image2').files[0];
+
+            if (!file1 || !file2) {
+                alert("Please upload both frames.");
+                return;
+            }
+
+            const canvas1 = document.createElement("canvas");
+            const canvas2 = document.createElement("canvas");
+            const ctx1 = canvas1.getContext("2d");
+            const ctx2 = canvas2.getContext("2d");
+
+            function drawImageToCanvas(file, canvas, callback) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const img = new Image();
+                    img.crossOrigin = "Anonymous";
+                    img.src = event.target.result;
+                    img.onload = function () {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, img.width, img.height);
+                        callback();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+
+            drawImageToCanvas(file1, canvas1, () => {
+                drawImageToCanvas(file2, canvas2, () => {
+                    let similarity = getSimilarityScore(canvas1, canvas2);
+                    document.getElementById('result').innerText = `Similarity Score: ${similarity}%`;
+                });
+            });
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Shipping Inspector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Replace your existing Roboflow script tag with this -->
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+    crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js"
+    integrity="sha512-90vH1Z83AJY9DmlWa8WkjkV79yfS2n2Oxhsi2dZbIv0nC4E6m5AbH8Nh156kkM7JePmqD6tcZsfad1ueoaovww=="
+    crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.0/async.min.js"
+    integrity="sha512-6K6+H87tLdCWvY5ml9ZQXLRlPlDEt8uXmtELhuJRgFyEDv6JvndWHg3jadJuBVGPEhhA2AAt+ROMC2V7EvTIWw=="
+    crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/inferencejs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@latest/dist/index.js"></script>
+    <script src="js/detection.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/main.js"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Left Panel - 20% -->
+        <div class="w-[15%] p-4 bg-gray-50 border-r">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">Warehouse Shipping Inspector</h1>
+                <p class="text-sm text-gray-600 mt-2">Automated shipping validation system</p>
+            </div>
+
+            <!-- Inspection Options -->
+            <div class="p-6 space-y-6">
+                <!-- Camera Option -->
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                    <h2 class="text-lg font-semibold mb-3">Live Camera Scan</h2>
+                    <p class="text-sm text-gray-600 mb-4">Use your device's camera to scan boxes in real-time</p>
+                    <button onclick="startCamera()" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        Start Camera
+                    </button>
+                </div>
+
+                <!-- Video Upload Option -->
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                    <h2 class="text-lg font-semibold mb-3">Upload Video</h2>
+                    <p class="text-sm text-gray-600 mb-4">Process a pre-recorded video of boxes</p>
+                    <input type="file" id="videoInput" accept="video/*" class="hidden">
+                    <button onclick="document.getElementById('videoInput').click()" 
+                            class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors">
+                        Select Video
+                    </button>
+                </div>
+
+                <!-- Image Upload Option -->
+                <div class="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors">
+                    <h2 class="text-lg font-semibold mb-3">Upload Image</h2>
+                    <p class="text-sm text-gray-600 mb-4">Process a single image of boxes</p>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                    <button onclick="document.getElementById('imageInput').click()" 
+                            class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                        Select Image
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Panel - 40% -->
+        <div class="w-[50%] flex flex-col">
+            <div id="preview-container" class="flex-grow relative">
+                <video id="camera-feed" class="w-full h-full object-contain hidden" autoplay playsinline></video>
+                <canvas id="detection-canvas" class="absolute top-0 left-0 pointer-events-none hidden"></canvas>
+                <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-400">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <p>Select an inspection method to begin</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - 40% -->
+        <div class="w-[35%] p-4 bg-white">
+            <div class="mb-4">
+                <h2 class="text-xl font-semibold">Inspection Results</h2>
+            </div>
+            <div id="results-content" class="grid grid-cols-2 gap-1 auto-rows-max overflow-y-auto max-h-[calc(100vh-8rem)]">
+                <!-- Detection results will be inserted here -->
+            </div>
+        </div>
+    </div>
+    <!-- Popup Container -->
+    <div id="popup" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden">
+        <div class="relative max-w-[60vw] rounded-lg border-4 border-gray-500 p-2 bg-white">
+            <img id="popupImage" class="w-full h-auto">
+            <button id="popupClose"class="absolute -top-4 -right-4 bg-red-500 text-white rounded-full p-2 shadow-lg hover:bg-red-600 transition">
+                ✖
+            </button>
+        </div>
+    </div>
+</body>
+</html>

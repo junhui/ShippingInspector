@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Barcode Scanner with ZXing</title>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+    <style>
+        #result {
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #imagePreview {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Barcode Scanner with ZXing</h1>
+    <input type="file" id="imageInput" accept="image/*" />
+    <p id="result">Select an image to scan for barcodes.</p>
+    <img id="imagePreview" alt="Image Preview" />
+
+    <script>
+        const fileInput = document.getElementById('imageInput');
+        const resultElement = document.getElementById('result');
+        const imagePreview = document.getElementById('imagePreview');
+
+        fileInput.addEventListener('change', async function() {
+            if (fileInput.files.length === 0) {
+                resultElement.textContent = "Please select an image file.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const imageUrl = URL.createObjectURL(file);
+
+            // Display the selected image
+            imagePreview.src = imageUrl;
+            imagePreview.style.display = 'block';
+
+            // Create an image element and load the selected file
+            const image = new Image();
+            image.src = imageUrl;
+
+            image.onload = async function() {
+                resultElement.textContent = "Scanning for barcodes...";
+
+                // Use ZXing to decode the barcode
+                const codeReader = new ZXing.BrowserMultiFormatReader(); // Supports multiple formats
+
+                try {
+                    console.log("Starting barcode scan...");
+                    const result = await codeReader.decodeFromImageElement(image);
+                    console.log("Barcode scan result:", result);
+                    resultElement.textContent = `Barcode detected (${result.format}): ${result.text}`;
+                } catch (error) {
+                    console.error("Barcode scan error:", error);
+
+                    // Retry with image preprocessing
+                    const retryResult = await retryScanWithPreprocessing(image);
+                    if (retryResult) {
+                        resultElement.textContent = `Barcode detected (${retryResult.format}): ${retryResult.text}`;
+                    } else {
+                        resultElement.textContent = "No barcode detected. Ensure the image is clear and contains a valid barcode.";
+                    }
+                }
+            };
+
+            image.onerror = function() {
+                resultElement.textContent = "Failed to load the image.";
+            };
+        });
+
+        /**
+         * Retry barcode detection with image preprocessing.
+         * @param {HTMLImageElement} image - The image to process.
+         * @returns {Promise<ZXing.Result|null>} - The scan result or null if no barcode is detected.
+         */
+        async function retryScanWithPreprocessing(image) {
+            console.log("Retrying scan with image preprocessing...");
+
+            // Create a canvas to preprocess the image
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = image.width;
+            canvas.height = image.height;
+
+            // Draw the image on the canvas
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            // Apply preprocessing (e.g., resizing, contrast adjustment)
+            const processedImageData = applyPreprocessing(context, canvas.width, canvas.height);
+
+            // Use ZXing to decode the preprocessed image
+            const codeReader = new ZXing.BrowserMultiFormatReader();
+            try {
+                const result = await codeReader.decodeFromImageData(processedImageData, canvas.width, canvas.height);
+                console.log("Retry scan result:", result);
+                return result;
+            } catch (error) {
+                console.error("Retry scan error:", error);
+                return null;
+            }
+        }
+
+        /**
+         * Apply preprocessing to the image (e.g., resizing, contrast adjustment).
+         * @param {CanvasRenderingContext2D} context - The canvas context.
+         * @param {number} width - The image width.
+         * @param {number} height - The image height.
+         * @returns {ImageData} - The processed image data.
+         */
+        function applyPreprocessing(context, width, height) {
+            // Example: Convert the image to grayscale for better contrast
+            const imageData = context.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3; // Grayscale
+                data[i] = avg; // Red
+                data[i + 1] = avg; // Green
+                data[i + 2] = avg; // Blue
+            }
+
+            context.putImageData(imageData, 0, 0);
+            return context.getImageData(0, 0, width, height);
+        }
+    </script>
+</body>
+</html>

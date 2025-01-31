@@ -1,0 +1,170 @@
+.detection-box {
+    position: absolute;
+    border: 2px solid;
+    pointer-events: none;
+}
+
+.detection-box.match {
+    border-color: #22c55e;
+    background-color: rgba(34, 197, 94, 0.1);
+}
+
+.detection-box.mismatch {
+    border-color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.detection-label {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    padding: 2px 6px;
+    color: white;
+    font-size: 12px;
+    border-radius: 4px;
+}
+
+.detection-box.match .detection-label {
+    background-color: #22c55e;
+}
+
+.detection-box.mismatch .detection-label {
+    background-color: #ef4444;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    z-index: 50;
+} 
+/* Add responsive grid breakpoints */
+@media (min-width: 640px) {
+    #results-content {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    #results-content {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    #results-content {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+@media (min-width: 1600px) {
+    #results-content {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+@media (min-width: 2000px) {
+    #results-content {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+@media (min-width: 2600px) {
+    #results-content {
+        grid-template-columns: repeat(7, 1fr);
+    }
+}
+/* Ensure aspect ratio for image containers */
+.aspect-w-1 {
+    position: relative;
+    padding-bottom: 100%;
+}
+
+.aspect-w-1 > img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+} 
+
+/* Add these styles to your existing CSS */
+.group:hover .hidden {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 50;
+}
+
+.group {
+    position: relative;
+} 
+/* Add these styles to your existing CSS */
+.detection-item {
+    transition: all 0.3s ease;
+}
+
+.preview-overlay {
+    transition: opacity 0.2s ease;
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+.preview-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.preview-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#detection-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+/* Fancy Scrollbar */
+#results-content::-webkit-scrollbar {
+    width: 8px;
+}
+#results-content::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+#results-content::-webkit-scrollbar-thumb:hover {
+    background-color: #c6f1bd;
+}
+
+.box-description .box-description-item {
+    display: none;
+}

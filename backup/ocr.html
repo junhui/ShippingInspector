@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCRAD.js Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #image-preview {
+            max-width: 100%;
+            margin: 10px 0;
+        }
+        textarea {
+            width: 80%;
+            height: 150px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>OCRAD.js Image to Text Demo</h2>
+
+    <input type="file" id="file-input" accept="image/*"><br>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="image-preview" src="" alt="Image Preview"><br>
+    <button onclick="performOCR()">Extract Text</button>
+
+    <h3>Extracted Text:</h3>
+    <textarea id="output" readonly></textarea>
+
+    <!-- OCRAD.js Library -->
+    <script src="https://rawgit.com/antimatter15/ocrad.js/master/ocrad.js"></script>
+
+    <script>
+        const fileInput = document.getElementById("file-input");
+        const imagePreview = document.getElementById("image-preview");
+        const canvas = document.getElementById("canvas");
+        const output = document.getElementById("output");
+
+        // Handle file upload
+        fileInput.addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Perform OCR
+        function performOCR() {
+            const ctx = canvas.getContext("2d");
+            canvas.width = imagePreview.width;
+            canvas.height = imagePreview.height;
+            ctx.drawImage(imagePreview, 0, 0, canvas.width, canvas.height);
+
+            // Run OCRAD on the image
+            const extractedText = OCRAD(canvas);
+            output.value = extractedText;
+        }
+    </script>
+
+</body>
+</html>

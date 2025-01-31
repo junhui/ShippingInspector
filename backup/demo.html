@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuaggaJS Barcode Reader Demo</title>
+    <style>
+        #interactive.viewport {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        #interactive.viewport > canvas, #interactive.viewport > video {
+            max-width: 100%;
+            width: 100%;
+        }
+        canvas.drawing, canvas.drawingBuffer {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+        }
+        #uploadedImage {
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        #barcodeResults {
+            list-style: none;
+            padding: 0;
+        }
+        #imageContainer {
+            position: relative;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        #barcodeBox {
+            position: absolute;
+            border: 3px solid #FF0000;
+            pointer-events: none;
+            z-index: 1;
+        }
+        canvas.drawingLayer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>QuaggaJS Barcode Reader Demo</h1>
+    
+    <div>
+        <h3>Upload Image</h3>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <div id="result">
+        <div id="imageContainer">
+            <img id="uploadedImage" style="display: none;">
+            <div id="barcodeBox"></div>
+        </div>
+        <h3>Detected Barcodes:</h3>
+        <ul id="barcodeResults"></ul>
+    </div>
+
+    <!-- Load Quagga from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            // Clear previous boxes
+            document.querySelectorAll('.barcodeBox').forEach(box => box.remove());
+            
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Display the uploaded image
+            const uploadedImage = document.getElementById('uploadedImage');
+            const barcodeBox = document.getElementById('barcodeBox');
+            uploadedImage.style.display = 'block';
+            barcodeBox.style.display = 'none';
+            uploadedImage.src = URL.createObjectURL(file);
+
+            // Wait for image to load before processing
+            uploadedImage.onload = function() {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    Quagga.decodeSingle({
+                        decoder: {
+                            readers: [
+                                "code_128_reader",
+                                "ean_reader",
+                                "ean_8_reader",
+                                "code_39_reader",
+                                "code_39_vin_reader",
+                                "codabar_reader",
+                                "upc_reader",
+                                "upc_e_reader",
+                                "i2of5_reader",
+                                "2of5_reader",
+                                "code_93_reader"
+                            ]
+                        },
+                        locate: true,
+                        src: e.target.result,
+                        numOfWorkers: 0,
+                        inputStream: {
+                            size: 800
+                        },
+                        debug: {
+                            drawBoundingBox: true,
+                            showFrequency: true,
+                            drawScanline: true,
+                            showPattern: true
+                        }
+                    }, function(result) {
+                        // Create or get canvas
+                        let drawingCanvas = document.querySelector('#imageContainer canvas.drawingLayer');
+                        if (!drawingCanvas) {
+                            drawingCanvas = document.createElement('canvas');
+                            drawingCanvas.className = 'drawingLayer';
+                            document.getElementById('imageContainer').appendChild(drawingCanvas);
+                        }
+
+                        // Set canvas size to match image
+                        const imageRect = uploadedImage.getBoundingClientRect();
+                        drawingCanvas.setAttribute('width', imageRect.width);
+                        drawingCanvas.setAttribute('height', imageRect.height);
+                        drawingCanvas.style.width = imageRect.width + 'px';
+                        drawingCanvas.style.height = imageRect.height + 'px';
+
+                        const drawingCtx = drawingCanvas.getContext('2d');
+                        const scaleX = imageRect.width / uploadedImage.naturalWidth;
+                        const scaleY = imageRect.height / uploadedImage.naturalHeight;
+
+                        // Clear previous drawings
+                        drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+
+                        if (result) {
+                            // Scale the context to match image size
+                            drawingCtx.scale(scaleX, scaleY);
+
+                            // Draw all potential boxes in green
+                            if (result.boxes) {
+                                result.boxes.filter(function (box) {
+                                    return box !== result.box;
+                                }).forEach(function (box) {
+                                    Quagga.ImageDebug.drawPath(box, {x: 0, y: 1}, drawingCtx, {
+                                        color: "green",
+                                        lineWidth: 2
+                                    });
+                                });
+                            }
+
+                            // Draw main box in blue
+                            if (result.box) {
+                                Quagga.ImageDebug.drawPath(result.box, {x: 0, y: 1}, drawingCtx, {
+                                    color: "#00F",
+                                    lineWidth: 2
+                                });
+                            }
+
+                            // Draw the scan line in red
+                            if (result.codeResult && result.codeResult.code) {
+                                Quagga.ImageDebug.drawPath(result.line, {x: 'x', y: 'y'}, drawingCtx, {
+                                    color: 'red',
+                                    lineWidth: 3
+                                });
+                            }
+
+                            // Reset scale
+                            drawingCtx.scale(1/scaleX, 1/scaleY);
+                        }
+
+                        // Update results list
+                        const barcodeResults = document.getElementById('barcodeResults');
+                        barcodeResults.innerHTML = '';
+                        
+                        if (result && result.codeResult) {
+                            console.log("Detected barcode:", result);
+                            const li = document.createElement('li');
+                            li.textContent = `${result.codeResult.code} (${result.codeResult.format})`;
+                            barcodeResults.appendChild(li);
+                        } else {
+                            console.log("No barcode detected", result);
+                            const li = document.createElement('li');
+                            li.textContent = 'No barcode detected';
+                            barcodeResults.appendChild(li);
+                        }
+                    });
+                };
+                reader.readAsDataURL(file);
+            };
+        });
+    </script>
+</body>
+</html>

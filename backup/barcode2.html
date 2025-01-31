@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barcode Scanner Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@latest/dist/index.js"></script>
+</head>
+<body>
+    <h2>Barcode Scanner Demo</h2>
+    <input type="file" id="fileInput" accept="image/*">
+    <canvas id="barcodeCanvas" style="display: none;"></canvas>
+    <p id="result">Scan result will appear here.</p>
+
+    <script>
+class BarcodeScanner {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.offCanvas = null;
+        this.usingOffscreenCanvas = this.isOffscreenCanvasWorking();
+    }
+
+    isOffscreenCanvasWorking() {
+        try {
+            return Boolean(new OffscreenCanvas(1, 1).getContext('2d'));
+        } catch {
+            return false;
+        }
+    }
+
+    getOffCtx2d(width, height) {
+        if (this.usingOffscreenCanvas) {
+            if (!this.offCanvas || this.offCanvas.width !== width || this.offCanvas.height !== height) {
+                this.offCanvas = new OffscreenCanvas(width, height);
+            }
+            return this.offCanvas.getContext('2d');
+        }
+    }
+
+    async scan(source) {
+        this.canvas.width = source.naturalWidth || source.videoWidth || source.width;
+        this.canvas.height = source.naturalHeight || source.videoHeight || source.height;
+
+        if (!this.canvas.width || !this.canvas.height) {
+            throw new Error('Source not ready');
+        }
+
+        const offCtx = this.getOffCtx2d(this.canvas.width, this.canvas.height) || this.ctx;
+        offCtx.drawImage(source, 0, 0);
+
+        const imageData = offCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const symbols = await zbarWasm.scanImageData(imageData);
+
+        symbols.forEach(s => s.rawValue = s.decode('utf-8'));
+
+        return symbols.map(s => s.rawValue);
+    }
+}
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('barcodeCanvas');
+            const scanner = new BarcodeScanner(canvas);
+            const fileInput = document.getElementById('fileInput');
+            const resultOutput = document.getElementById('result');
+
+            fileInput.addEventListener('change', async event => {
+                const file = event.target.files[0];
+                if (file) {
+                    const img = new Image();
+                    img.src = URL.createObjectURL(file);
+                    img.onload = async () => {
+                        try {
+                            const barcodes = await scanner.scan(img);
+                            resultOutput.textContent = barcodes.length ? barcodes.join(', ') : 'No barcode detected';
+                        } catch (error) {
+                            resultOutput.textContent = 'Error: ' + error.message;
+                        }
+                    };
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Shipping Inspector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/3.2.0/async.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/inferencejs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@latest/dist/index.js"></script>
+    <script src="js/detection.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/main.js"></script>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+        <!-- Main Content -->
+        <div class="flex flex-col md:flex-row flex-grow overflow-hidden">
+            <!-- Main Inspection Area -->
+            <main class="flex-grow flex flex-col items-center justify-center">
+                <div id="preview-container" class="preview-container flex-grow relative h-[50vh] md:h-[90vh]">
+                    <video id="camera-feed" class="w-full h-full object-contain hidden" autoplay playsinline></video>
+                    <canvas id="detection-canvas" class="absolute top-0 left-0 pointer-events-none hidden"></canvas>
+                    <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <p>Select an inspection method to begin</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <!-- Results Panel with Header -->
+            <aside class="md:w-1/2 p-4 bg-white border-r overflow-y-auto flex flex-col">
+                <div class="mb-4">
+                    <h1 class="text-lg md:text-xl font-bold">Warehouse Shipping Inspector</h1>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="startCamera(this)" class="flex-1 bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700 text-sm">Start Camera</button>
+                    <button onclick="document.getElementById('videoInput').click()" class="flex-1 bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 text-sm">Upload Video</button>
+                    <input type="file" id="videoInput" accept="video/*" class="hidden">
+                    <button onclick="document.getElementById('imageInput').click()" class="flex-1 bg-purple-600 text-white py-1 px-3 rounded-md hover:bg-purple-700 text-sm">Upload Image</button>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                </div>
+                <h2 class="text-lg font-semibold mt-6">Inspection Results</h2>
+                    <div id="results-content" class="grid grid-cols-2 gap-1 auto-rows-max overflow-y-auto h-[85vh]">
+                    <!-- Dynamic results will appear here -->
+                </div>
+            </aside>
+        </div>
+    <!-- Popup Container -->
+    <div id="popup" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden">
+        <div class="relative max-w-[60vw] rounded-lg border-4 border-gray-500 p-2 bg-white">
+            <button id="popupClose" class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md">X</button>
+            <div class="grid grid-cols-1 md:grid-cols-2">
+                <!-- Image Section -->
+                <div class="flex justify-end items-center">
+                    <img id="popupImage" alt="Popup Image" class="max-w-full h-auto rounded-md shadow-md">
+                </div>
+                <!-- Description Section -->
+                <div id="popupDescription" class="flex flex-col p-4 justify-center bg-white text-gray-600 mt-2 text-lg">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

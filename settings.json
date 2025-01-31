@@ -1,0 +1,23 @@
+{
+    "liveServer.settings.CustomBrowser": "chrome",
+    "liveServer.settings.https": {
+        "enable": true,
+        "cert": "",
+        "key": "",
+        "passphrase": ""
+    },
+    "liveServer.settings.proxy": {
+        "enable": true,
+        "baseUri": "/",
+        "proxyUri": "http://127.0.0.1:5500"
+    },
+    "liveServer.settings.donotShowInfoMsg": true,
+    "liveServer.settings.donotVerifyTags": true,
+    "liveServer.settings.host": "127.0.0.1",
+    "liveServer.settings.middleware": {
+        "/": function(req, res, next) {
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            next();
+        }
+    }
+} 
