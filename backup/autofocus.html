@@ -57,7 +57,8 @@
                         autofocus: true,
                         facingMode: 'environment',
                         width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+                        height: { ideal: 1080 },
+                        frameRate: 30 
                     }
                 });
                 video.srcObject = stream;
@@ -76,7 +77,14 @@
             }
             clearInterval(intervalId);
         }
-
+        function enhanceImage(imageData) {
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const grayscale = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2];
+            data[i] = data[i + 1] = data[i + 2] = grayscale > 128 ? 255 : 0; // 二值化处理
+        }
+        return imageData;
+    }
         function detectAutoFocus() {
             const ctx = canvas.getContext('2d');
 
@@ -94,7 +102,8 @@
                 if (!video.srcObject) return;
 
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                imageData = enhanceImage(imageData);
                 let sharpness = calculateSharpness(imageData);
                 let sharpnessDiff = Math.abs(sharpness - lastSharpness);
 
