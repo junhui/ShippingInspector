@@ -10,7 +10,8 @@ class CameraHandler {
                 video: {
                     facingMode: 'environment',
                     width: { ideal: 3840 },
-                    height: { ideal: 2160 }
+                    height: { ideal: 2160 },
+                    frameRate: 30 
                 }
             });
             this.videoElement.srcObject = this.stream;
