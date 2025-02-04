@@ -301,9 +301,9 @@ class DetectionHandler {
         resultsPanel.innerHTML += boxes.map((box, index) => {
             const { tempCanvas, paddedWidth, paddedHeight, variance } = this.getObjectCanvas(box);
             this.currentBoxIndex++;
-            if (variance < 2000 || paddedWidth < 200 || paddedHeight < 200) {
-                return '';
-            }
+            // if (variance < 2000 || paddedWidth < 200 || paddedHeight < 200) {
+            //     return '';
+            // }
             let boxId = this.currentFrameIndex + '-' + this.currentBoxIndex;
             if (this.previousBox.canvas) {
                 const similarityScore = this.getSimilarityScore(tempCanvas, this.previousBox.canvas);
