@@ -376,7 +376,7 @@ class DetectionHandler {
             return `
                 <div class="box-item bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow detection-item relative border ${this.validateShippingLabel(box) ? 'border-green-500' : 'border-red-500'
                 }"
-                    data-box-index="${boxId}">
+                    data-box-index="${boxId}" data-detection-index="${predictions.indexOf(box)}">
                     <div class="relative" style="${containerStyle}">
                         <img src="${croppedImageUrl}" 
                             alt="Box ${index + 1}" 
